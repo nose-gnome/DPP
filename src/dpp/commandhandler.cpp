@@ -190,10 +190,10 @@ void commandhandler::route(const struct dpp::message_create_t& event)
 		std::stringstream ss(msg_content);
 		std::string command;
 		ss >> command;
-		/* Prefixed command, the prefix was removed */
+        /* Prefixed command, the prefix was removed */
 		auto found_cmd = commands.find(lowercase(command));
-		if (found_cmd != commands.end()) {
-			/* Filter out guild specific commands that are not for the current guild */
+        if (found_cmd != commands.end()) {
+            /* Filter out guild specific commands that are not for the current guild */
 			if (found_cmd->second.guild_id && found_cmd->second.guild_id != event.msg.guild_id) {
 				return;
 			}
@@ -427,13 +427,21 @@ void commandhandler::auto_reply(const std::string &mt, command_source source, co
 }
 void commandhandler::auto_reply(const dpp::message &m, command_source source, command_completion_event_t callback) {
     dpp::message msg = m;
+   	msg.owner = this->owner;
+	msg.guild_id = source.guild_id;
+	msg.channel_id = source.channel_id;
     if (!source.command_token.empty() && source.command_id) {
+        std::cout << "Sending slash command" << std::endl;
         source.interaction_event->reply(msg, [callback, msg, source](const auto & cc) {
             if(cc.get_error().code == 40060){
                 source.interaction_event->followup(msg, callback);
             } else callback(cc);
         });
-    } else owner->message_create(msg, callback);
+    } else {
+        std::cout << "Sending plain msg" << std::endl;
+        owner->message_create(msg, callback);
+
+    }
 //    if(source.replied) source.interaction_event->followup(msg, callback);
 //    else reply(m, source, callback);
 }
