@@ -370,6 +370,7 @@ public:
 	 */
 	void reply(const dpp::message &m, command_source source, command_completion_event_t callback = utility::log_error());
 
+    void auto_reply(const dpp::message &m, command_source source, command_completion_event_t callback = utility::log_error());
 	/**
 	 * @brief Reply to a command without a message, causing the discord client
 	 * to display "Bot name is thinking...".

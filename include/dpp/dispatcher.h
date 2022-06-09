@@ -347,6 +347,22 @@ struct DPP_EXPORT interaction_create_t : public event_dispatch_t {
 	 */
 	void reply(const std::string & mt, command_completion_event_t callback = utility::log_error()) const;
 
+    /**
+    * @brief Send a followup for this interaction.
+    * A simple message followup
+    * @param m Message object to send.  Not all fields are supported by Discord
+    * @param callback User function to execute when the api call completes.
+    */
+    void followup(const message & m, command_completion_event_t callback = utility::log_error()) const;
+
+    /**
+     * @brief Send a followup for this interaction.
+     * A simple message followup
+     * @param m The string value to send, for simple text only messages.
+     * @param callback User function to execute when the api call completes.
+     */
+    void followup(const std::string & mt, command_completion_event_t callback = utility::log_error()) const;
+
 	/**
 	 * @brief Reply to interaction with a dialog box
 	 * 
@@ -1325,6 +1341,7 @@ struct DPP_EXPORT message_create_t : public event_dispatch_t {
 	 * @note confirmation_callback_t::value contains a message object on success. On failure, value is undefined and confirmation_callback_t::is_error() is true.
 	 */
 	void reply(const std::string& m, bool mention_replied_user = false, command_completion_event_t callback = utility::log_error()) const;
+
 	/**
 	 * @brief Reply to the message received in the event.
 	 * @param msg Message to send as a reply.

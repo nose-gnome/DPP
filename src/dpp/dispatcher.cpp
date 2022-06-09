@@ -29,147 +29,155 @@
 
 namespace dpp {
 
-thread_local bool stop_event = false;
+    thread_local bool stop_event = false;
 
-event_dispatch_t::event_dispatch_t(discord_client* client, const std::string &raw) : raw_event(raw), from(client)
-{
-	/* NOTE: This is thread_local because the event_dispatch_t sent to the event is const and cannot itself be modified,
-	 * so there's no const-safe way to set an object variable to true later!
-	 */
-	stop_event = false;
-}
+    event_dispatch_t::event_dispatch_t(discord_client *client, const std::string &raw) : raw_event(raw), from(client) {
+        /* NOTE: This is thread_local because the event_dispatch_t sent to the event is const and cannot itself be modified,
+         * so there's no const-safe way to set an object variable to true later!
+         */
+        stop_event = false;
+    }
 
-const event_dispatch_t& event_dispatch_t::cancel_event() const
-{
-	/* NOTE: This is thread_local because the event_dispatch_t sent to the event is const and cannot itself be modified,
-	 * so there's no const-safe way to have this as an object property!
-	 */
-	stop_event = true;
-	return *this;
-}
+    const event_dispatch_t &event_dispatch_t::cancel_event() const {
+        /* NOTE: This is thread_local because the event_dispatch_t sent to the event is const and cannot itself be modified,
+         * so there's no const-safe way to have this as an object property!
+         */
+        stop_event = true;
+        return *this;
+    }
 
-bool event_dispatch_t::is_cancelled() const
-{
-	return stop_event;
-}
+    bool event_dispatch_t::is_cancelled() const {
+        return stop_event;
+    }
 
-context_menu_t::context_menu_t(class discord_client* client, const std::string& raw) : interaction_create_t(client, raw) {
-}
+    context_menu_t::context_menu_t(class discord_client *client, const std::string &raw) : interaction_create_t(client,
+                                                                                                                raw) {
+    }
 
-message_context_menu_t::message_context_menu_t(class discord_client* client, const std::string& raw) : context_menu_t(client, raw) {
-}
+    message_context_menu_t::message_context_menu_t(class discord_client *client, const std::string &raw)
+            : context_menu_t(client, raw) {
+    }
 
-message message_context_menu_t::get_message() const {
-	return ctx_message;
-}
+    message message_context_menu_t::get_message() const {
+        return ctx_message;
+    }
 
-message_context_menu_t& message_context_menu_t::set_message(const message& m) {
-	ctx_message = m;
-	return *this;
-}
+    message_context_menu_t &message_context_menu_t::set_message(const message &m) {
+        ctx_message = m;
+        return *this;
+    }
 
-user_context_menu_t::user_context_menu_t(class discord_client* client, const std::string& raw) : context_menu_t(client, raw) {
-}
+    user_context_menu_t::user_context_menu_t(class discord_client *client, const std::string &raw) : context_menu_t(
+            client, raw) {
+    }
 
-user user_context_menu_t::get_user() const {
-	return ctx_user;
-}
+    user user_context_menu_t::get_user() const {
+        return ctx_user;
+    }
 
-user_context_menu_t& user_context_menu_t::set_user(const user& u) {
-	ctx_user = u;
-	return *this;
-}
+    user_context_menu_t &user_context_menu_t::set_user(const user &u) {
+        ctx_user = u;
+        return *this;
+    }
 
 
-void message_create_t::send(const std::string& m, command_completion_event_t callback) const
-{
-	this->send(dpp::message(m), callback);
-}
+    void message_create_t::send(const std::string &m, command_completion_event_t callback) const {
+        this->send(dpp::message(m), callback);
+    }
 
-void message_create_t::send(message& msg, command_completion_event_t callback) const 
-{
-	msg.channel_id = this->msg.channel_id;
-	this->from->creator->message_create(msg, callback);
-}
+    void message_create_t::send(message &msg, command_completion_event_t callback) const {
+        msg.channel_id = this->msg.channel_id;
+        this->from->creator->message_create(msg, callback);
+    }
 
-void message_create_t::send(message&& msg, command_completion_event_t callback) const 
-{
-	msg.channel_id = this->msg.channel_id;
-	this->from->creator->message_create(msg, callback);
-}
+    void message_create_t::send(message &&msg, command_completion_event_t callback) const {
+        msg.channel_id = this->msg.channel_id;
+        this->from->creator->message_create(msg, callback);
+    }
 
-void message_create_t::reply(const std::string& m, bool mention_replied_user, command_completion_event_t callback) const
-{
-	this->reply(dpp::message(m), mention_replied_user, callback);
-}
+    void message_create_t::reply(const std::string &m, bool mention_replied_user,
+                                 command_completion_event_t callback) const {
+        this->reply(dpp::message(m), mention_replied_user, callback);
+    }
 
-void message_create_t::reply(message& msg, bool mention_replied_user, command_completion_event_t callback) const 
-{
-	msg.set_reference(this->msg.id);
-	msg.channel_id = this->msg.channel_id;
-	if (mention_replied_user) {
-		msg.allowed_mentions.replied_user = mention_replied_user;
-		msg.allowed_mentions.users.push_back(this->msg.author.id);
-	}
-	this->from->creator->message_create(msg, callback);
-}
+    void message_create_t::reply(message &msg, bool mention_replied_user, command_completion_event_t callback) const {
+        msg.set_reference(this->msg.id);
+        msg.channel_id = this->msg.channel_id;
+        if (mention_replied_user) {
+            msg.allowed_mentions.replied_user = mention_replied_user;
+            msg.allowed_mentions.users.push_back(this->msg.author.id);
+        }
+        this->from->creator->message_create(msg, callback);
+    }
 
-void message_create_t::reply(message&& msg, bool mention_replied_user, command_completion_event_t callback) const 
-{
-	msg.set_reference(this->msg.id);
-	msg.channel_id = this->msg.channel_id;
-	if (mention_replied_user) {
-		msg.allowed_mentions.replied_user = mention_replied_user;
-		msg.allowed_mentions.users.push_back(this->msg.author.id);
-	}
-	this->from->creator->message_create(msg, callback);
-}
+    void message_create_t::reply(message &&msg, bool mention_replied_user, command_completion_event_t callback) const {
+        msg.set_reference(this->msg.id);
+        msg.channel_id = this->msg.channel_id;
+        if (mention_replied_user) {
+            msg.allowed_mentions.replied_user = mention_replied_user;
+            msg.allowed_mentions.users.push_back(this->msg.author.id);
+        }
+        this->from->creator->message_create(msg, callback);
+    }
 
-void interaction_create_t::reply(interaction_response_type t, const message & m, command_completion_event_t callback) const
-{
-	from->creator->interaction_response_create(this->command.id, this->command.token, dpp::interaction_response(t, m), callback);
-}
+    void interaction_create_t::reply(interaction_response_type t, const message &m,
+                                     command_completion_event_t callback) const {
+        from->creator->interaction_response_create(this->command.id, this->command.token,
+                                                   dpp::interaction_response(t, m), callback);
+    }
 
-void interaction_create_t::reply(const message & m, command_completion_event_t callback) const
-{
-	from->creator->interaction_response_create(
-		this->command.id,
-		this->command.token,
-		dpp::interaction_response(ir_channel_message_with_source, m),
-		callback
-	);
-}
+    void interaction_create_t::reply(const message &m, command_completion_event_t callback) const {
+        from->creator->interaction_response_create(
+                this->command.id,
+                this->command.token,
+                dpp::interaction_response(ir_channel_message_with_source, m),
+                callback
+        );
+    }
 
-void interaction_create_t::thinking(bool ephemeral, command_completion_event_t callback) const {
-	message msg;
-	msg.content = "*";
-	msg.guild_id = this->command.guild_id;
-	msg.channel_id = this->command.channel_id;
-	if (ephemeral) {
-		msg.set_flags(dpp::m_ephemeral);
-	}
-	this->reply(ir_deferred_channel_message_with_source, msg, callback);
-}
+    void interaction_create_t::followup(const std::string &mt, command_completion_event_t callback) const {
+        followup(message(mt), callback);
+    }
 
-void interaction_create_t::reply(command_completion_event_t callback) const
-{
-	this->reply(ir_deferred_update_message, message(), callback);
-}
+    void interaction_create_t::followup(const message &m, command_completion_event_t callback) const {
+        from->creator->interaction_followup_create(
+                this->command.token,
+                m,
+                callback
+        );
+    }
 
-void interaction_create_t::dialog(const interaction_modal_response& mr, command_completion_event_t callback) const
-{
-	from->creator->interaction_response_create(this->command.id, this->command.token, mr, callback);
-}
 
-void interaction_create_t::reply(interaction_response_type t, const std::string & mt, command_completion_event_t callback) const
-{
-	this->reply(t, dpp::message(this->command.channel_id, mt, mt_application_command), callback);
-}
+    void interaction_create_t::thinking(bool ephemeral, command_completion_event_t callback) const {
+        message msg;
+        msg.content = "*";
+        msg.guild_id = this->command.guild_id;
+        msg.channel_id = this->command.channel_id;
+        if (ephemeral) {
+            msg.set_flags(dpp::m_ephemeral);
+        }
+        this->reply(ir_deferred_channel_message_with_source, msg, callback);
+    }
 
-void interaction_create_t::reply(const std::string & mt, command_completion_event_t callback) const
-{
-	this->reply(ir_channel_message_with_source, dpp::message(this->command.channel_id, mt, mt_application_command), callback);
-}
+    void interaction_create_t::reply(command_completion_event_t callback) const {
+        this->reply(ir_deferred_update_message, message(), callback);
+    }
+
+    void interaction_create_t::dialog(const interaction_modal_response &mr, command_completion_event_t callback) const {
+        from->creator->interaction_response_create(this->command.id, this->command.token, mr, callback);
+    }
+
+    void interaction_create_t::reply(interaction_response_type t, const std::string &mt,
+                                     command_completion_event_t callback) const {
+        this->reply(t, dpp::message(this->command.channel_id, mt, mt_application_command), callback);
+    }
+
+    void interaction_create_t::reply(const std::string &mt, command_completion_event_t callback) const {
+        this->reply(ir_channel_message_with_source, dpp::message(this->command.channel_id, mt, mt_application_command),
+                    callback);
+    }
+
+
 
 void interaction_create_t::edit_response(const message & m, command_completion_event_t callback) const
 {

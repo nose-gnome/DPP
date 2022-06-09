@@ -421,6 +421,19 @@ void commandhandler::reply(const dpp::message &m, command_source source, command
 	}
 }
 
+void commandhandler::auto_reply(const dpp::message &m, command_source source, command_completion_event_t callback) {
+    dpp::message msg = m;
+    if (!source.command_token.empty() && source.command_id) {
+        source.interaction_event->reply(msg, [callback, msg, source](const auto & cc) {
+            if(cc.get_error().code == 40060){
+                source.interaction_event->followup(msg, callback);
+            } else callback(cc);
+        });
+    } else owner->message_create(msg, callback);
+//    if(source.replied) source.interaction_event->followup(msg, callback);
+//    else reply(m, source, callback);
+}
+
 void commandhandler::thinking(command_source source, command_completion_event_t callback)
 {
 	dpp::message msg(this->owner);
