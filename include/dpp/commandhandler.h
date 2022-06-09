@@ -229,6 +229,13 @@ private:
 	 * @brief List of global commands to bulk register
 	 */
 	std::vector<dpp::slashcommand> bulk_registration_list_global;
+
+    //TODO: Add description
+
+    enum response_type {REPLY, FOLLOWUP};
+
+    //TODO: Add description
+    void response_create(const message &m, command_source source, response_type type, command_completion_event_t callback = utility::log_error());
 public:
 	/**
 	 * @brief Commands in the handler
@@ -370,8 +377,15 @@ public:
 	 */
 	void reply(const dpp::message &m, command_source source, command_completion_event_t callback = utility::log_error());
 
+    //TODO: Add description
     void auto_reply(const dpp::message &m, command_source source, command_completion_event_t callback = utility::log_error());
-	/**
+    void auto_reply(const std::string &mt, command_source source, command_completion_event_t callback = utility::log_error());
+
+    //TODO: Add description
+    void followup(const dpp::message &m, command_source source, command_completion_event_t callback = utility::log_error());
+    void followup(const std::string &mt, command_source source, command_completion_event_t callback = utility::log_error());
+
+    /**
 	 * @brief Reply to a command without a message, causing the discord client
 	 * to display "Bot name is thinking...".
 	 * The "thinking" message will persist for a maximum of 15 minutes.

@@ -410,17 +410,21 @@ void commandhandler::route(const struct slashcommand_t & event)
 
 void commandhandler::reply(const dpp::message &m, command_source source, command_completion_event_t callback)
 {
-	dpp::message msg = m;
-	msg.owner = this->owner;
-	msg.guild_id = source.guild_id;
-	msg.channel_id = source.channel_id;
-	if (!source.command_token.empty() && source.command_id) {
-		owner->interaction_response_create(source.command_id, source.command_token, dpp::interaction_response(ir_channel_message_with_source, msg), callback);
-	} else {
-		owner->message_create(msg, callback);
-	}
+//	dpp::message msg = m;
+//	msg.owner = this->owner;
+//	msg.guild_id = source.guild_id;
+//	msg.channel_id = source.channel_id;
+//	if (!source.command_token.empty() && source.command_id) {
+//		owner->interaction_response_create(source.command_id, source.command_token, dpp::interaction_response(ir_channel_message_with_source, msg), callback);
+//	} else {
+//		owner->message_create(msg, callback);
+//	}
+    response_create(m, source, REPLY, callback);
 }
 
+void commandhandler::auto_reply(const std::string &mt, command_source source, command_completion_event_t callback) {
+    return auto_reply(message(mt), source, callback);
+}
 void commandhandler::auto_reply(const dpp::message &m, command_source source, command_completion_event_t callback) {
     dpp::message msg = m;
     if (!source.command_token.empty() && source.command_id) {
@@ -433,6 +437,12 @@ void commandhandler::auto_reply(const dpp::message &m, command_source source, co
 //    if(source.replied) source.interaction_event->followup(msg, callback);
 //    else reply(m, source, callback);
 }
+void commandhandler::followup(const std::string &mt, command_source source, command_completion_event_t callback) {
+    followup(message(mt), source, callback);
+}
+void commandhandler::followup(const message &m, command_source source, command_completion_event_t callback) {
+    response_create(m, source, FOLLOWUP, callback);
+}
 
 void commandhandler::thinking(command_source source, command_completion_event_t callback)
 {
@@ -444,10 +454,30 @@ void commandhandler::thinking(command_source source, command_completion_event_t 
 		owner->interaction_response_create(source.command_id, source.command_token, dpp::interaction_response(ir_deferred_channel_message_with_source, msg), callback);
 	}
 }
+void commandhandler::response_create(const message &m, command_source source, response_type type, command_completion_event_t callback) {
+    dpp::message msg = m;
+    msg.owner = this->owner;
+    msg.guild_id = source.guild_id;
+    msg.channel_id = source.channel_id;
+    if (!source.command_token.empty() && source.command_id) {
+        switch (type) {
+            case REPLY:
+                owner->interaction_response_create(source.command_id, source.command_token, dpp::interaction_response(ir_channel_message_with_source, msg), callback);
+                break;
+            case FOLLOWUP:
+                owner->interaction_followup_create(source.command_token, msg, callback);
+                break;
+        }
+    } else {
+        owner->message_create(msg, callback);
+    }
+}
 
 void commandhandler::thonk(command_source source, command_completion_event_t callback)
 {
 	thinking(source, callback);
 }
+
+
 
 };
