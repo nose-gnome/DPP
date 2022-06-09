@@ -438,7 +438,6 @@ void commandhandler::auto_reply(const dpp::message &m, command_source source, co
             } else callback(cc);
         });
     } else {
-        std::cout << "Sending plain msg" << std::endl;
         owner->message_create(msg, callback);
 
     }
