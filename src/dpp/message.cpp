@@ -28,14 +28,13 @@
 #include <dpp/stringops.h>
 #include <dpp/exception.h>
 #include <dpp/cluster.h>
-#include <dpp/fmt-minimal.h>
 
 using json = nlohmann::json;
 
 namespace dpp {
 
 component::component() :
-	type(static_cast<component_type>(1)), label(""), style(static_cast<component_style>(1)), custom_id(""),
+	type(cot_action_row), label(""), style(cos_primary), custom_id(""),
 	min_values(-1), max_values(-1), min_length(0), max_length(0), disabled(false), required(false)
 {
 	emoji.animated = false;
@@ -395,8 +394,8 @@ embed::~embed() = default;
 embed::embed() : timestamp(0), color(0) {
 }
 
-message::message() : managed(0), channel_id(0), guild_id(0), sent(0), edited(0), tts(false),
-	mention_everyone(false), pinned(false), webhook_id(0), flags(0), type(mt_default), owner(nullptr)
+message::message() : managed(0), channel_id(0), guild_id(0), sent(0), edited(0), webhook_id(0),
+	owner(nullptr), type(mt_default), flags(0), pinned(false), tts(false), mention_everyone(false)
 {
 	message_reference.channel_id = 0;
 	message_reference.guild_id = 0;
@@ -436,7 +435,7 @@ message& message::set_allowed_mentions(bool _parse_users, bool _parse_roles, boo
 
 message::message(snowflake _channel_id, const std::string &_content, message_type t) : message() {
 	channel_id = _channel_id;
-	content = utility::utf8substr(_content, 0, 2000);
+	content = utility::utf8substr(_content, 0, 4000);
 	type = t;
 }
 
@@ -452,7 +451,7 @@ message& message::add_embed(const embed& e)
 	return *this;
 }
 
-message& message::set_flags(uint8_t f)
+message& message::set_flags(uint16_t f)
 {
 	flags = f;
 	return *this;
@@ -492,7 +491,7 @@ message& message::add_file(const std::string &fn, const std::string &fc) {
 
 message& message::set_content(const std::string &c)
 {
-	content = utility::utf8substr(c, 0, 2000);
+	content = utility::utf8substr(c, 0, 4000);
 	return *this;
 }
 
@@ -507,7 +506,7 @@ message& message::set_guild_id(snowflake _guild_id) {
 }
 
 message::message(const std::string &_content, message_type t) : message() {
-	content = utility::utf8substr(_content, 0, 2000);
+	content = utility::utf8substr(_content, 0, 4000);
 	type = t;
 }
 
@@ -715,6 +714,7 @@ attachment::attachment(struct message* o, json *j) : attachment(o) {
 	this->id = snowflake_not_null(j, "id");
 	this->size = (*j)["size"];
 	this->filename = (*j)["filename"];
+	this->description = string_not_null(j, "description");
 	this->url = (*j)["url"];
 	this->proxy_url = (*j)["proxy_url"];
 	this->width = int32_not_null(j, "width");
@@ -725,7 +725,7 @@ attachment::attachment(struct message* o, json *j) : attachment(o) {
 
 void attachment::download(http_completion_event callback) const {
 	/* Download attachment if there is one attached to this object */
-	if (!owner->owner) {
+	if (owner == nullptr || owner->owner == nullptr) {
 		throw dpp::logic_exception("attachment has no owning message/cluster");
 	}
 	if (callback && this->id && !this->url.empty()) {
@@ -869,7 +869,7 @@ bool message::is_crosspost() const {
 }
 
 bool message::is_dm() const {
-	return guild_id == 0;
+	return guild_id.empty();
 }
 
 bool message::suppress_embeds() const {
@@ -896,6 +896,10 @@ bool message::is_loading() const {
 	return flags & m_loading;
 }
 
+bool message::is_thread_mention_failed() const {
+	return flags & m_thread_mention_failed;
+}
+
 message::~message() = default;
 
 
@@ -904,13 +908,13 @@ message& message::fill_from_json(json* d, cache_policy_t cp) {
 	this->channel_id = snowflake_not_null(d, "channel_id");
 	this->guild_id = snowflake_not_null(d, "guild_id");
 	/* We didn't get a guild id. See if we can find one in the channel */
-	if (guild_id == 0 && channel_id != 0) {
+	if (guild_id.empty() && !channel_id.empty()) {
 		dpp::channel* c = dpp::find_channel(this->channel_id);
 		if (c) {
 			this->guild_id = c->guild_id;
 		}
 	}
-	this->flags = int8_not_null(d, "flags");
+	this->flags = int16_not_null(d, "flags");
 	this->type = static_cast<message_type>(int8_not_null(d, "type"));
 	this->author = user();
 	/* May be null, if its null cache it from the partial */
@@ -982,7 +986,7 @@ message& message::fill_from_json(json* d, cache_policy_t cp) {
 			/* User caching on, lazy or aggressive - cache the member information */
 			auto thismember = g->members.find(uid);
 			if (thismember == g->members.end()) {
-				if (uid != 0 && author.id) {
+				if (!uid.empty() && author.id) {
 					guild_member gm;
 					gm.fill_from_json(&mi, g->id, uid);
 					g->members[author.id] = gm;
@@ -1135,10 +1139,7 @@ std::string sticker::get_url(bool accept_lottie) const {
 	if (this->format_type == sticker_format::sf_lottie && !accept_lottie) {
 		return std::string();
 	} else {
-		return fmt::format("{}/stickers/{}.{}",
-						   utility::cdn_host,
-						   this->id,
-						   this->format_type == sticker_format::sf_lottie ? "json" : "png");
+		return utility::cdn_host + "/stickers/" + std::to_string(this->id) + (this->format_type == sticker_format::sf_lottie ? ".json" : ".png");
 	}
 }
 

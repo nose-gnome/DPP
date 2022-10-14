@@ -78,7 +78,12 @@
 		"ctls",
 		"ctest",
 		"automod",
-		"amod"
+		"amod",
+		"apult",
+		"cplusplus",
+		"xmake",
+		"CORO",
+		"cback"
 	],
 	"flagWords": [
 		"hte"
